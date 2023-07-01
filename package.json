@@ -1,0 +1,15 @@
+{
+  "name": "ltally-bot",
+  "version": "1.0.0",
+  "description": "a bot to collate the tallies in a discord server",
+  "main": "index.js",
+  "author": "Maurice Adjei",
+  "license": "MIT",
+  "dependencies": {
+    "discord.js": "^14.11.0",
+    "dotenv": "^16.3.1"
+  },
+  "devDependencies": {
+    "eslint": "^8.44.0"
+  }
+}
