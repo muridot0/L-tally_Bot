@@ -1,7 +1,15 @@
 const fs = require('node:fs')
 const path = require('node:path')
-const { Client, Collection, Events, GatewayIntentBits } = require('discord.js')
+const {
+  Client,
+  Collection,
+  EmbedBuilder,
+  Events,
+  GatewayIntentBits
+} = require('discord.js')
 const { token } = require('./config.json')
+const { request, json } = require('undici')
+const axios = require('axios')
 
 // Create a new client instance
 const client = new Client({
@@ -13,6 +21,12 @@ const client = new Client({
 })
 
 client.commands = new Collection()
+
+// When the client is ready, run this code (only once)
+// We use 'c' for the event parameter to keep it separate from the already defined 'client'
+client.once(Events.ClientReady, (c) => {
+  console.log(`Ready! Logged in as ${c.user.tag}`)
+})
 
 const commandsPath = path.join(__dirname, 'commands')
 const commandFiles = fs
@@ -33,6 +47,59 @@ for (const file of commandFiles) {
 }
 
 client.on(Events.InteractionCreate, async (interaction) => {
+  const { commandName } = interaction
+  let authToken
+  await interaction.deferReply()
+
+  if (commandName === 'add_tally_to') {
+    const strategy = 'login'
+    const username = 'notgr_server'
+    const password = 'P@ssword123'
+    const spaceName = interaction.options.getString('space')
+    // await axios.post('https://api.muri-o.com/authentication', {strategy, username, password}).then(res => console.log(res.data))
+    try {
+      let login = await axios.post('https://api.muri-o.com/authentication', {
+        strategy,
+        username,
+        password
+      })
+      authToken = await login.data.accessToken
+      if (authToken) {
+        try {
+          let getSpaceName = await axios.get(
+            `https://api.muri-o.com/space?spaceName=${spaceName}`,
+            { headers: authToken }
+          )
+          console.log(getSpaceName.body.json())
+        } catch (err) {
+          const { response } = err
+          console.log(response.data.message)
+        }
+      }
+      return interaction.editReply(authToken)
+    } catch (err) {
+      const { response } = err
+      return interaction.editReply(`${response.data.message}`)
+      // console.log(err.response.data.message)
+    }
+    // try {
+    //   const login = await axios.post('https://api.muri-o.com/authentication', {strategy, username, password})
+    //   // const login = await request('https://api.muri-o.com/authentication', {
+    //   //   method: 'POST',
+    //   //   headers: {'Content-Type': 'application/json'},
+    //   //   body: {
+    //   //     "strategy": "login",
+    //   //     "username": "notgr_server",
+    //   //     "password": "P@ssword123"
+    //   //   }
+    //   // })
+    //   const data = await login.body.json()
+    //   console.log(login)
+    // } catch {
+    //   // handle errors here
+    // }
+  }
+
   if (!interaction.isChatInputCommand()) return
   const command = interaction.client.commands.get(interaction.commandName)
 
@@ -57,11 +124,6 @@ client.on(Events.InteractionCreate, async (interaction) => {
       })
     }
   }
-})
-// When the client is ready, run this code (only once)
-// We use 'c' for the event parameter to keep it separate from the already defined 'client'
-client.once(Events.ClientReady, (c) => {
-  console.log(`Ready! Logged in as ${c.user.tag}`)
 })
 
 // Log in to Discord with your client's token
