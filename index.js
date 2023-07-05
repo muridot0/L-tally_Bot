@@ -5,10 +5,12 @@ const {
   Collection,
   EmbedBuilder,
   Events,
-  GatewayIntentBits
+  GatewayIntentBits,
+  Channel
 } = require('discord.js')
 const { token } = require('./config.json')
 const { request, json } = require('undici')
+const {AuthService} = require('./utils/auth-service')
 const axios = require('axios')
 
 // Create a new client instance
@@ -48,7 +50,7 @@ for (const file of commandFiles) {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   const { commandName } = interaction
-  let authToken
+  let authToken = null
   await interaction.deferReply()
 
   if (commandName === 'add_tally_to') {
@@ -56,32 +58,46 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const username = 'notgr_server'
     const password = 'P@ssword123'
     const spaceName = interaction.options.getString('space')
-    // await axios.post('https://api.muri-o.com/authentication', {strategy, username, password}).then(res => console.log(res.data))
+    const userName = interaction.options.getUser('target')
+    const login = new AuthService()
+
     try {
-      let login = await axios.post('https://api.muri-o.com/authentication', {
-        strategy,
-        username,
-        password
-      })
-      authToken = await login.data.accessToken
-      if (authToken) {
+      // let login = await axios.post('https://api.muri-o.com/authentication', {
+      //   strategy,
+      //   username,
+      //   password
+      // })
+      const res = await login.getToken()
+      console.log(res.token)
+      authToken = res.token
+      if (authToken !== null) {
         try {
+          const headers = {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${authToken}`
+          }
           let getSpaceName = await axios.get(
             `https://api.muri-o.com/space?spaceName=${spaceName}`,
-            { headers: authToken }
+            { headers: headers}
           )
-          console.log(getSpaceName.body.json())
+          const res = await getSpaceName.data
+          console.log(res, userName)
+          // return getSpaceName.body.json()
         } catch (err) {
           const { response } = err
-          console.log(response.data.message)
+          return interaction.editReply(`${response.data.message}`)
         }
       }
       return interaction.editReply(authToken)
     } catch (err) {
       const { response } = err
-      return interaction.editReply(`${response.data.message}`)
+      return interaction.editReply(err)
       // console.log(err.response.data.message)
     }
+
+    // if (authToken) {
+
+    // }
     // try {
     //   const login = await axios.post('https://api.muri-o.com/authentication', {strategy, username, password})
     //   // const login = await request('https://api.muri-o.com/authentication', {
