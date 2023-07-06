@@ -11,6 +11,7 @@ const {
 const { token } = require('./config.json')
 const { request, json } = require('undici')
 const {AuthService} = require('./utils/auth-service')
+const {TallyService} = require('./utils/TallyService')
 const axios = require('axios')
 
 // Create a new client instance
@@ -60,35 +61,33 @@ client.on(Events.InteractionCreate, async (interaction) => {
     const spaceName = interaction.options.getString('space')
     const userName = interaction.options.getUser('target')
     const login = new AuthService()
+    const tally = new TallyService(userName.username)
 
     try {
-      // let login = await axios.post('https://api.muri-o.com/authentication', {
-      //   strategy,
-      //   username,
-      //   password
-      // })
-      const res = await login.getToken()
-      console.log(res.token)
-      authToken = res.token
-      if (authToken !== null) {
-        try {
-          const headers = {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${authToken}`
-          }
-          let getSpaceName = await axios.get(
-            `https://api.muri-o.com/space?spaceName=${spaceName}`,
-            { headers: headers}
-          )
-          const res = await getSpaceName.data
-          console.log(res, userName)
-          // return getSpaceName.body.json()
-        } catch (err) {
-          const { response } = err
-          return interaction.editReply(`${response.data.message}`)
-        }
-      }
-      return interaction.editReply(authToken)
+
+      // const res = await login.getToken()
+      const res = await tally.getTallyByUserName()
+      console.log(res.data)
+      // authToken = res.token
+      // if (authToken !== null) {
+      //   try {
+      //     const headers = {
+      //       'Content-Type': 'application/json',
+      //       'Authorization': `Bearer ${authToken}`
+      //     }
+      //     let getSpaceName = await axios.get(
+      //       `https://api.muri-o.com/space?spaceName=${spaceName}`,
+      //       { headers: headers}
+      //     )
+      //     const res = await getSpaceName.data
+      //     console.log(res, userName)
+      //     // return getSpaceName.body.json()
+      //   } catch (err) {
+      //     const { response } = err
+      //     return interaction.editReply(`${response.data.message}`)
+      //   }
+      // }
+      return interaction.editReply('added')
     } catch (err) {
       const { response } = err
       return interaction.editReply(err)
