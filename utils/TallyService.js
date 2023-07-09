@@ -1,22 +1,19 @@
 const axios = require('axios')
 const jwt_decode = require('jwt-decode')
 const { AuthService } = require('./auth-service')
-const fs = require('fs')
-const path = require('path')
-const os = require('os')
-const envFilePath = path.resolve(__dirname, '../.env')
 
 class TallyService {
   constructor(username) {
     this.username = username
+    this.url = 'https://api.muri-o.com/'
   }
 
-  async getTallyByUserName() {
+  async getValidToken() {
     const login = new AuthService()
 
     let exp = false
 
-    let authToken =  login.getToken('JWT_TOKEN')
+    let authToken = login.getToken('JWT_TOKEN')
     console.log(authToken)
 
     const decoded = jwt_decode(authToken)
@@ -33,18 +30,43 @@ class TallyService {
       login.setToken('JWT_TOKEN', authToken)
       console.log('resetting token')
     }
+
+    return authToken
+  }
+
+  async getTallyNumberByUserName() {
     const headers = {
       'Content-Type': 'application/json',
-      Authorization: `Bearer ${authToken}`
+      Authorization: `Bearer ${await this.getValidToken()}`
     }
 
     return axios
-      .get(`https://api.muri-o.com/tally?tallyName=${this.username}`, {
+      .get(`${this.url}tally?tallyName=${this.username}`, {
         headers: headers
       })
       .then((res) => {
-        return res
+        const result = res.data.data[0]
+        const name = result.tallyName
+        const number = result.tallyNumber
+        return { name, number }
       })
+  }
+
+  async patchTallyNumber() {
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await this.getValidToken()}`
+    }
+
+    let { number } = await this.getTallyNumberByUserName()
+
+    return axios.patch(
+      `${this.url}tally?tallyName=${this.username}`,
+      { tallyNumber: number + 1 },
+      { headers: headers }
+    ).then(res => {
+      return res.data[0]
+    })
   }
 }
 

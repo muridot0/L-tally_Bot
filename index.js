@@ -66,8 +66,8 @@ client.on(Events.InteractionCreate, async (interaction) => {
     try {
 
       // const res = await login.getToken()
-      const res = await tally.getTallyByUserName()
-      console.log(res.data)
+      const res = await tally.patchTallyNumber()
+      console.log(res.tallyNumber)
       // authToken = res.token
       // if (authToken !== null) {
       //   try {
@@ -87,7 +87,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       //     return interaction.editReply(`${response.data.message}`)
       //   }
       // }
-      return interaction.editReply('added')
+      return interaction.editReply(`Added 1 tally to ${userName}. Total tally for member is now ${res.tallyNumber}`)
     } catch (err) {
       const { response } = err
       return interaction.editReply(err)
