@@ -3,8 +3,7 @@ const jwt_decode = require('jwt-decode')
 const { AuthService } = require('./auth-service')
 
 class TallyService {
-  constructor(username) {
-    this.username = username
+  constructor() {
     this.url = 'https://api.muri-o.com/'
   }
 
@@ -14,7 +13,6 @@ class TallyService {
     let exp = false
 
     let authToken = login.getToken('JWT_TOKEN')
-    console.log(authToken)
 
     const decoded = jwt_decode(authToken)
     const now = new Date().getTime() / 1000
@@ -34,38 +32,50 @@ class TallyService {
     return authToken
   }
 
-  async getTallyNumberByUserName() {
+
+  async getTallyNumberByUserName(name) {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await this.getValidToken()}`
     }
 
+
     return axios
-      .get(`${this.url}tally?tallyName=${this.username}`, {
+      .get(`${this.url}tally?tallyName=${name}`, {
         headers: headers
       })
       .then((res) => {
         const result = res.data.data[0]
-        const name = result.tallyName
-        const number = result.tallyNumber
-        return { name, number }
+        let name = null
+        let number = null
+        if(result){
+          name = result.tallyName
+          number = result.tallyNumber
+        }
+        return { result, name, number }
       })
   }
 
-  async patchTallyNumber() {
+  async patchTallyNumber(count, name) {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await this.getValidToken()}`
     }
 
-    let { number } = await this.getTallyNumberByUserName()
-
     return axios.patch(
-      `${this.url}tally?tallyName=${this.username}`,
-      { tallyNumber: number + 1 },
+      `${this.url}tally?tallyName=${name}`,
+      { tallyNumber: count + 1 },
       { headers: headers }
     ).then(res => {
       return res.data[0]
+    }).catch(err => {
+      if(err.response){
+        console.log(`Error Response: ${err.response}`)
+      } else if (err.request){
+        console.log(`Error Request: ${err.resquest}`)
+      } else {
+        console.log(`Error Message: ${err.message}`)
+      }
     })
   }
 }

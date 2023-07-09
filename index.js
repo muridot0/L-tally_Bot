@@ -10,8 +10,8 @@ const {
 } = require('discord.js')
 const { token } = require('./config.json')
 const { request, json } = require('undici')
-const {AuthService} = require('./utils/auth-service')
-const {TallyService} = require('./utils/TallyService')
+const { AuthService } = require('./utils/auth-service')
+const { TallyService } = require('./utils/TallyService')
 const axios = require('axios')
 
 // Create a new client instance
@@ -51,68 +51,26 @@ for (const file of commandFiles) {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   const { commandName } = interaction
-  let authToken = null
   await interaction.deferReply()
 
   if (commandName === 'add_tally_to') {
-    const strategy = 'login'
-    const username = 'notgr_server'
-    const password = 'P@ssword123'
     const spaceName = interaction.options.getString('space')
-    const userName = interaction.options.getUser('target')
-    const login = new AuthService()
-    const tally = new TallyService(userName.username)
+    const user = interaction.options.getUser('target')
+    const tally = new TallyService()
 
-    try {
-
-      // const res = await login.getToken()
-      const res = await tally.patchTallyNumber()
-      console.log(res.tallyNumber)
-      // authToken = res.token
-      // if (authToken !== null) {
-      //   try {
-      //     const headers = {
-      //       'Content-Type': 'application/json',
-      //       'Authorization': `Bearer ${authToken}`
-      //     }
-      //     let getSpaceName = await axios.get(
-      //       `https://api.muri-o.com/space?spaceName=${spaceName}`,
-      //       { headers: headers}
-      //     )
-      //     const res = await getSpaceName.data
-      //     console.log(res, userName)
-      //     // return getSpaceName.body.json()
-      //   } catch (err) {
-      //     const { response } = err
-      //     return interaction.editReply(`${response.data.message}`)
-      //   }
-      // }
-      return interaction.editReply(`Added 1 tally to ${userName}. Total tally for member is now ${res.tallyNumber}`)
-    } catch (err) {
-      const { response } = err
-      return interaction.editReply(err)
-      // console.log(err.response.data.message)
+    const tallyName = await tally.getTallyNumberByUserName(user.username)
+    const name = tallyName.name
+    const count = tallyName.number
+    if (name) {
+      const tallyNumber = await tally.patchTallyNumber(count, user.username)
+      return interaction.editReply(
+        `Added 1 tally to ${user}. Total tally for member is now ${tallyNumber.tallyNumber}`
+      )
+    } else {
+      return interaction.editReply(
+        `${user} doesnt exist in the L-tally space would you like to add them ?`
+      )
     }
-
-    // if (authToken) {
-
-    // }
-    // try {
-    //   const login = await axios.post('https://api.muri-o.com/authentication', {strategy, username, password})
-    //   // const login = await request('https://api.muri-o.com/authentication', {
-    //   //   method: 'POST',
-    //   //   headers: {'Content-Type': 'application/json'},
-    //   //   body: {
-    //   //     "strategy": "login",
-    //   //     "username": "notgr_server",
-    //   //     "password": "P@ssword123"
-    //   //   }
-    //   // })
-    //   const data = await login.body.json()
-    //   console.log(login)
-    // } catch {
-    //   // handle errors here
-    // }
   }
 
   if (!interaction.isChatInputCommand()) return
