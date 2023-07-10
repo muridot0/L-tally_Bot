@@ -20,8 +20,8 @@ module.exports = {
   async execute(interaction) {
     const user = interaction.options.getUser('target')
     const space = interaction.options.getString('space')
-    await interaction.reply(
-      `${interaction.user.username} added 1 tally to ${user} in ${space}`
-    )
+    // await interaction.reply(
+    //   `${interaction.user.username} added 1 tally to ${user} in ${space}`
+    // )
   }
 }

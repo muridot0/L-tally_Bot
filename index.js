@@ -3,16 +3,14 @@ const path = require('node:path')
 const {
   Client,
   Collection,
-  EmbedBuilder,
   Events,
   GatewayIntentBits,
-  Channel
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder
 } = require('discord.js')
 const { token } = require('./config.json')
-const { request, json } = require('undici')
-const { AuthService } = require('./utils/auth-service')
 const { TallyService } = require('./utils/TallyService')
-const axios = require('axios')
 
 // Create a new client instance
 const client = new Client({
@@ -51,26 +49,67 @@ for (const file of commandFiles) {
 
 client.on(Events.InteractionCreate, async (interaction) => {
   const { commandName } = interaction
-  await interaction.deferReply()
 
   if (commandName === 'add_tally_to') {
+    await interaction.deferReply()
     const spaceName = interaction.options.getString('space')
     const user = interaction.options.getUser('target')
     const tally = new TallyService()
+
+    const confirm = new ButtonBuilder()
+      .setCustomId('confirm')
+      .setLabel('Confirm Add')
+      .setStyle(ButtonStyle.Success)
+
+    const cancel = new ButtonBuilder()
+      .setCustomId('cancel')
+      .setLabel('Cancel')
+      .setStyle(ButtonStyle.Secondary)
+
+    const row = new ActionRowBuilder().addComponents(cancel, confirm)
 
     const tallyName = await tally.getTallyNumberByUserName(user.username)
     const name = tallyName.name
     const count = tallyName.number
     if (name) {
       const tallyNumber = await tally.patchTallyNumber(count, user.username)
-      return interaction.editReply(
-        `Added 1 tally to ${user}. Total tally for member is now ${tallyNumber.tallyNumber}`
+      await interaction.editReply(
+        `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now ${tallyNumber.tallyNumber}`
       )
     } else {
-      return interaction.editReply(
-        `${user} doesnt exist in the L-tally space would you like to add them ?`
-      )
+      const response = await interaction.editReply({
+        content: `${user} doesnt exist in the L-tally space \`${spaceName}\` would you like to add them ?`,
+        components: [row]
+      })
+
+      const collectorFilter = (i) => i.user.id === interaction.user.id
+
+      try{
+        const confirmation = await response.awaitMessageComponent({
+          filter: collectorFilter,
+          time: 10000
+        })
+        if (confirmation.customId === 'confirm') {
+          await tally.addTally(spaceName, user.username)
+          await confirmation.update({
+            content: `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now 1`,
+            components: []
+          })
+        } else if (confirmation.customId === 'cancel') {
+          await confirmation.update({
+            content: 'Action cancelled',
+            components: []
+          })
+        }
+      } catch(e) {
+        await interaction.editReply({
+          content: 'Confirmation not received within 1 minute, cancelling',
+          components: []
+        })
+      }
     }
+
+    // return response
   }
 
   if (!interaction.isChatInputCommand()) return
