@@ -69,6 +69,19 @@ class TallyService {
     return axios.post(`${this.url}tally`, tallyData, { headers: headers })
   }
 
+  async getTalliesInASpace(spaceName){
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await this.getValidToken()}`
+    }
+
+    const res = await this.getSpace(spaceName)
+
+    return axios.get(`${this.url}tally?spaceId=${res.id}`, {headers: headers}).then(res => {
+      return res.data.data
+    })
+  }
+
   async getTallyNumberByUserName(name) {
     const headers = {
       'Content-Type': 'application/json',
