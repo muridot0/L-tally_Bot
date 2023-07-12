@@ -54,6 +54,15 @@ class AuthService {
     // write everything back to the file system
     fs.writeFileSync(envFilePath, envVars.join(os.EOL))
   }
+
+  getId(key) {
+    // find the line that contains the key (exact match)
+    const matchedLine = this.readEnvVars().find(
+      (line) => line.split('=')[0] === key
+    )
+    // split the line (delimiter is '=') and return the item at index 2
+    return matchedLine !== undefined ? matchedLine.split('=')[1] : null
+  }
 }
 
 module.exports = { AuthService }

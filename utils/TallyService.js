@@ -44,11 +44,42 @@ class TallyService {
       .then((res) => {
         const result = res.data.data[0]
         let id = null
+        let space = null
         if(result){
           id=result._id
+          space = result.spaceName
         }
-        return {result, id}
+        return {result, id, space}
       })
+  }
+
+  async addSpace(space, userName) {
+    const login = new AuthService()
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await this.getValidToken()}`
+    }
+
+    let id = v4()
+
+    let spaceData = {
+      _id: id,
+      userId: login.getId('DISCORD_SERVER_ID'),
+      spaceName: space,
+      route: `/${space}/${id}`
+    }
+
+    let tallyData = {
+      _id: v4(),
+      spaceId: id,
+      tallyName: userName,
+      tallyNumber: 1
+    }
+
+    return axios.post(`${this.url}space`, spaceData, { headers: headers}).then(() => {
+      return axios.post(`${this.url}tally`, tallyData, { headers: headers })
+    })
   }
 
   async addTally(spaceName, userName) {
@@ -76,6 +107,7 @@ class TallyService {
     }
 
     const res = await this.getSpace(spaceName)
+    console.log(res)
 
     return axios.get(`${this.url}tally?spaceId=${res.id}`, {headers: headers}).then(res => {
       return res.data.data

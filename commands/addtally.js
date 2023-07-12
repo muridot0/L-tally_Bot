@@ -1,5 +1,9 @@
-
-const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js')
+const {
+  SlashCommandBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+  ActionRowBuilder
+} = require('discord.js')
 const { TallyService } = require('../utils/TallyService')
 
 module.exports = {
@@ -38,13 +42,49 @@ module.exports = {
     const row = new ActionRowBuilder().addComponents(cancel, confirm)
 
     const tallyName = await tally.getTallyNumberByUserName(user.username)
+    const spaceRes = await tally.getSpace(spaceName)
+
+    const space = spaceRes.space
+    console.log(space)
     const name = tallyName.name
     const count = tallyName.number
-    if (name) {
+
+    if (name && space) {
       const tallyNumber = await tally.patchTallyNumber(count, user.username)
       await interaction.editReply(
         `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now ${tallyNumber.tallyNumber}`
       )
+    } else if (!space) {
+      const response = await interaction.editReply({
+        content: `\`${space}\` doesnt exist would you like to add it and add ${user} to it?`,
+        components: [row]
+      })
+      const collectorFilter = (i) => i.user.id === interaction.user.id
+
+      try {
+        const confirmation = await response.awaitMessageComponent({
+          filter: collectorFilter,
+          time: 10000
+        })
+        if (confirmation.customId === 'confirm') {
+          await tally.addSpace(spaceName, user.username)
+          await confirmation.update({
+            content: `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now 1`,
+            components: []
+          })
+        } else if (confirmation.customId === 'cancel') {
+          await confirmation.update({
+            content: 'Action cancelled',
+            components: []
+          })
+        }
+      } catch (e) {
+        await interaction.editReply({
+          content: 'Confirmation not received within 1 minute, cancelling',
+          components: []
+        })
+      }
+
     } else {
       const response = await interaction.editReply({
         content: `${user} doesnt exist in the L-tally space \`${spaceName}\` would you like to add them ?`,
