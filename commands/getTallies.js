@@ -17,30 +17,17 @@ module.exports = {
 
     const tallies = await tally.getTalliesInASpace(spaceName)
 
-    const tallyFunction = (tallyArr) => {
-      tallyArr.forEach((tally) => {
-        console.log([
-          { name: `${spaceName}`, value: `${tally.tallyName}`, inline: true },
-          { name: 'Tally', value: `${tally.tallyNumber}`, inline: true }
-        ])
-      })
+    const capitalise = (s) => {
+      return s[0].toUpperCase() + s.slice(1)
     }
 
-      tallies.forEach((tally) => {
-        console.log(tally.tallyName)
-      })
+    const talliesEmbed = new EmbedBuilder().setTitle(`${capitalise(spaceName)} tallies`)
 
-    // console.log(tallyNames(tallies))
+    for (let i = 0; i < tallies.length; i++){
+      talliesEmbed.addFields({name: `${tallies[i].tallyName}   |`, value: `${tallies[i].tallyNumber}`, inline: true})
+    }
 
-    // tallyFunction(tallies)
-
-    const talliesEmbed = new EmbedBuilder().setColor(0x0099ff).addFields({
-      name: `${spaceName}`,
-      value: 'chale',
-      inline: true
-    })
-
-    interaction.channel.send({ embeds: [talliesEmbed] })
-    // await interaction.reply(`There are 5 tallies in ${tallies}`)
+    await interaction.reply({content: `Here is the list of tallies within ${spaceName}`})
+    await interaction.channel.send({ embeds: [talliesEmbed], ephemeral: true })
   }
 }
