@@ -53,7 +53,7 @@ class TallyService {
       })
   }
 
-  async addSpace(space, userName) {
+  async addSpace(space, userName, count) {
     const login = new AuthService()
 
     const headers = {
@@ -74,7 +74,7 @@ class TallyService {
       _id: v4(),
       spaceId: id,
       tallyName: userName,
-      tallyNumber: 1
+      tallyNumber: count
     }
 
     return axios.post(`${this.url}space`, spaceData, { headers: headers}).then(() => {
@@ -82,7 +82,7 @@ class TallyService {
     })
   }
 
-  async addTally(spaceName, userName) {
+  async addTally(spaceName, userName, count) {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await this.getValidToken()}`
@@ -94,7 +94,7 @@ class TallyService {
       _id: v4(),
       spaceId: res.id,
       tallyName: userName,
-      tallyNumber: 1
+      tallyNumber: count
     }
 
     return axios.post(`${this.url}tally`, tallyData, { headers: headers })
@@ -113,14 +113,14 @@ class TallyService {
     })
   }
 
-  async getTallyNumberByUserName(name) {
+  async getTallyNumberByUserName(name, spaceId) {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await this.getValidToken()}`
     }
 
     return axios
-      .get(`${this.url}tally?tallyName=${name}`, {
+      .get(`${this.url}tally?tallyName=${name}&spaceId=${spaceId}`, {
         headers: headers
       })
       .then((res) => {
@@ -136,7 +136,7 @@ class TallyService {
       .catch((err) => err)
   }
 
-  async patchTallyNumber(count, name) {
+  async patchTallyNumber(count, name, spaceId) {
     const headers = {
       'Content-Type': 'application/json',
       Authorization: `Bearer ${await this.getValidToken()}`
@@ -144,8 +144,8 @@ class TallyService {
 
     return axios
       .patch(
-        `${this.url}tally?tallyName=${name}`,
-        { tallyNumber: count + 1 },
+        `${this.url}tally?tallyName=${name}&spaceId=${spaceId}`,
+        { tallyNumber: count},
         { headers: headers }
       )
       .then((res) => {

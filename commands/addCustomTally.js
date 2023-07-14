@@ -1,15 +1,10 @@
-const {
-  SlashCommandBuilder,
-  ButtonBuilder,
-  ButtonStyle,
-  ActionRowBuilder
-} = require('discord.js')
+const { SlashCommandBuilder, ButtonBuilder, ButtonStyle, ActionRowBuilder } = require('discord.js')
 const { TallyService } = require('../utils/TallyService')
 
 module.exports = {
   data: new SlashCommandBuilder()
-    .setName('add_tally_to')
-    .setDescription('adds a tally for a specific user')
+    .setName('add_custom_tally')
+    .setDescription('This command allows you to add a custom tally number to a member')
     .addUserOption((option) =>
       option
         .setName('target')
@@ -22,11 +17,18 @@ module.exports = {
         .setDescription('The space to add the tally to')
         .setRequired(true)
         .setMaxLength(100)
+    )
+    .addNumberOption((option) =>
+      option
+      .setName('count')
+      .setDescription('The number of tallies to add to the member')
+      .setRequired(true)
     ),
-  async execute(interaction) {
+  async execute(interaction){
     await interaction.deferReply()
-    const spaceName = interaction.options.getString('space')
     const user = interaction.options.getUser('target')
+    const spaceName = interaction.options.getString('space')
+    const count = interaction.options.getNumber('count')
     const tally = new TallyService()
 
     const confirm = new ButtonBuilder()
@@ -46,12 +48,13 @@ module.exports = {
 
     const tallyName = await tally.getTallyNumberByUserName(user.username, id)
     const name = tallyName.name
-    const count = tallyName.number + 1
+    const newCount = tallyName.number + count
+
 
     if (name && id) {
-      const tallyNumber = await tally.patchTallyNumber(count, user.username, id)
+      await tally.patchTallyNumber(newCount, user.username, id)
       await interaction.editReply(
-        `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now ${tallyNumber.tallyNumber}`
+        `Added ${count} tally to ${user} in ${spaceName}. Total tally for member is now ${newCount}`
       )
     } else if (!id) {
       const response = await interaction.editReply({
@@ -66,9 +69,9 @@ module.exports = {
           time: 10000
         })
         if (confirmation.customId === 'confirm') {
-          await tally.addSpace(spaceName, user.username, 1)
+          await tally.addSpace(spaceName, user.username, count)
           await confirmation.update({
-            content: `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now 1`,
+            content: `Added ${count} tallies to ${user} in ${spaceName}. Total tally for member is now ${count}`,
             components: []
           })
         } else if (confirmation.customId === 'cancel') {
@@ -98,9 +101,9 @@ module.exports = {
           time: 10000
         })
         if (confirmation.customId === 'confirm') {
-          await tally.addTally(spaceName, user.username, 1)
+          await tally.addTally(spaceName, user.username, count)
           await confirmation.update({
-            content: `Added 1 tally to ${user} in ${spaceName}. Total tally for member is now 1`,
+            content: `Added ${count} tallies to ${user} in ${spaceName}. Total tally for member is now ${count}`,
             components: []
           })
         } else if (confirmation.customId === 'cancel') {
@@ -116,5 +119,6 @@ module.exports = {
         })
       }
     }
+
   }
 }
