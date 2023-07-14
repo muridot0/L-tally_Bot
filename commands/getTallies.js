@@ -16,6 +16,7 @@ module.exports = {
     const tally = new TallyService()
 
     const tallies = await tally.getTalliesInASpace(spaceName)
+    console.log(tallies)
 
     const capitalise = (s) => {
       return s[0].toUpperCase() + s.slice(1)
@@ -27,7 +28,12 @@ module.exports = {
       talliesEmbed.addFields({name: `${tallies[i].tallyName}   |`, value: `${tallies[i].tallyNumber}`, inline: true})
     }
 
-    await interaction.reply({content: `Here is the list of tallies within ${spaceName}`})
-    await interaction.channel.send({ embeds: [talliesEmbed], ephemeral: true })
+    if(tallies.length === 0){
+      await interaction.reply({content: `Space \`${spaceName}\` doesnt exist.`})
+    } else {
+      await interaction.reply({content: `Here is the list of tallies within ${spaceName}`})
+      await interaction.channel.send({ embeds: [talliesEmbed], ephemeral: true })
+    }
+
   }
 }

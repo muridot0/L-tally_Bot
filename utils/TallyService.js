@@ -107,7 +107,6 @@ class TallyService {
     }
 
     const res = await this.getSpace(spaceName)
-    console.log(res)
 
     return axios.get(`${this.url}tally?spaceId=${res.id}`, {headers: headers}).then(res => {
       return res.data.data
@@ -161,6 +160,19 @@ class TallyService {
           console.log(`Error Message: ${err.message}`)
         }
       })
+  }
+
+  async getAllSpaces() {
+    const login = new AuthService()
+
+    const id = login.getToken('DISCORD_SERVER_ID')
+
+    const headers = {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${await this.getValidToken()}`
+    }
+
+    return axios.get(`${this.url}space?userId=${id}`, {headers: headers}).then(res => res.data.data)
   }
 }
 
