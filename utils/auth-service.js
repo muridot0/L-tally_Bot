@@ -40,7 +40,7 @@ class AuthService {
 
   setToken(key, value) {
     const envVars = this.readEnvVars()
-    console.log(envVars)
+
     const targetLine = envVars.find((line) => line.split('=')[0] === key)
     if (targetLine !== undefined) {
       // update existing line

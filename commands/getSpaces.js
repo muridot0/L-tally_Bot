@@ -9,7 +9,6 @@ module.exports = {
     const space = new TallyService()
 
     const spaces = await space.getAllSpaces()
-    console.log(spaces)
 
     const spacesEmbed = new EmbedBuilder().setColor(0x0099FF).setTitle('Notgr server spaces')
 

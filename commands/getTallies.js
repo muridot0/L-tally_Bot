@@ -16,7 +16,6 @@ module.exports = {
     const tally = new TallyService()
 
     const tallies = await tally.getTalliesInASpace(spaceName)
-    console.log(tallies)
 
     const capitalise = (s) => {
       return s[0].toUpperCase() + s.slice(1)
